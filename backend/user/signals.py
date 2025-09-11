@@ -6,8 +6,7 @@ from .models import Profile
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
-        # Only create a profile if it doesn't exist
         Profile.objects.create(user=instance)
-    else:
-        # If user is updated, also save the profile
-        instance.profile.save()
+@receiver(post_save, sender=User)
+def save_profile(sender, instance, **kwargs):
+    instance.profile.save()
