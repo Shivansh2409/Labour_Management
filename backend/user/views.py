@@ -56,6 +56,7 @@ def logout_view(request):
     logout(request)
     return Response({'message': 'logged out'})
 
+@csrf_exempt
 @api_view(['GET', 'PUT'])
 @permission_classes([IsAuthenticated])
 def main_view(request):
