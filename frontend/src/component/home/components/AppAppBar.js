@@ -44,6 +44,9 @@ export default function AppAppBar() {
   const goToSignin = () => {
     navigate('/signin'); // Navigate to the '/about' route
   };
+  const goToHome=()=>{
+    navigate('/')
+  }
 
   return (
     <AppBar
@@ -59,26 +62,16 @@ export default function AppAppBar() {
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
-            <Sitemark />
+            <h3 style={{color:'blue', marginRight:'10px'}}>VIJAY SATHI</h3>
             <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-              <Button variant="text" color="info" size="small">
-                <Link to={"/"}></Link>
-                Features
+              <Button variant="text" color="info" size="small" onClick={goToHome}>
+                Home
               </Button>
               <Button variant="text" color="info" size="small">
-                Testimonials
+                About
               </Button>
               <Button variant="text" color="info" size="small">
-                Highlights
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Pricing
-              </Button>
-              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                FAQ
-              </Button>
-              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                Blog
+                Info
               </Button>
             </Box>
           </Box>

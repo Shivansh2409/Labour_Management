@@ -6,6 +6,7 @@ import SignUp from './component/signup/Signup';
 import SignIn from './component/signIn/SignIn'
 import MarketingPage from './component/home/MarketingPage';
 import AppAppBar from './component/home/components/AppAppBar';
+import ProfilePage from './component/profile/ProfilePage';
 
 
 
@@ -16,6 +17,8 @@ root.render(
       <Route path='/' element={<MarketingPage/>} />
       <Route path='/signup' element={<SignUp/>}/>
       <Route path="/signin" element={<SignIn/>}/>
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/dashboard" element={<ProfilePage />} />
     </Routes>
    
   </BrowserRouter>

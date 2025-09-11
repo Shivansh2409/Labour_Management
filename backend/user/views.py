@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics, permissions
@@ -13,7 +13,7 @@ from .serializers import ProfileSerializer
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
-    serializer_class = ProfileSerializer
+    serializer_class = ProfileSerializer()
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
@@ -56,8 +56,28 @@ def logout_view(request):
     logout(request)
     return Response({'message': 'logged out'})
 
-@api_view(['GET'])
+@api_view(['GET', 'PUT'])
+@permission_classes([IsAuthenticated])
 def main_view(request):
-    if not request.user or not request.user.is_authenticated:
-        return Response({'error': 'not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
-    return Response({'message':f'Welcome to the main page, {request.user.username}!'})
+    """
+    Retrieve or update the profile of the authenticated user.
+    This view is now used by ProfilePage.js.
+    """
+    try:
+        profile = request.user.profile
+    except Profile.DoesNotExist:
+        return Response({'error': 'Profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = ProfileSerializer(profile)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        # partial=True allows for updating only some of the fields
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
