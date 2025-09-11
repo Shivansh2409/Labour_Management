@@ -1,10 +1,8 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import CssBaseline from '@mui/material/CssBaseline';
 import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import FormControl from '@mui/material/FormControl';
 import Link from '@mui/material/Link';
@@ -14,8 +12,6 @@ import Stack from '@mui/material/Stack';
 import MuiCard from '@mui/material/Card';
 import { styled } from '@mui/material/styles';
 import AppTheme from '../shared-theme/AppTheme';
-import ColorModeSelect from '../shared-theme/ColorModeSelect';
-import { GoogleIcon, FacebookIcon, SitemarkIcon } from './components/CustomIcons';
 import axios from 'axios';
 
 const Card = styled(MuiCard)(({ theme }) => ({
@@ -61,75 +57,79 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignUp(props) {
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState('');
+  const [formData, setFormData] = React.useState({
+    name: '',
+    email: '',
+    password: '',
+  });
 
-  const validateInputs = () => {
-    const email = document.getElementById('email');
-    const password = document.getElementById('password');
-    const name = document.getElementById('name');
+  const [formErrors, setFormErrors] = React.useState({
+    name: '',
+    email: '',
+    password: '',
+  });
 
+  // State to hold the error message from the backend
+  const [apiError, setApiError] = React.useState('');
+
+  const validate = () => {
+    let errors = {};
     let isValid = true;
-
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+    if (!formData.name) {
       isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage('');
+      errors.name = 'Username is required.';
     }
-
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+    if (!formData.email) {
       isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage('');
-    }
-
-    if (!name.value || name.value.length < 1) {
-      setNameError(true);
-      setNameErrorMessage('Name is required.');
+      errors.email = 'Email is required.';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       isValid = false;
-    } else {
-      setNameError(false);
-      setNameErrorMessage('');
+      errors.email = 'Email address is invalid.';
     }
-
+    if (!formData.password) {
+      isValid = false;
+      errors.password = 'Password is required.';
+    } else if (formData.password.length < 6) {
+      isValid = false;
+      errors.password = 'Password must be at least 6 characters.';
+    }
+    setFormErrors(errors);
     return isValid;
+  };
+  
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (event) => {
-    if (nameError || emailError || passwordError) {
-      event.preventDefault();
+    event.preventDefault();
+    setApiError(''); // Clear previous errors on a new attempt
+
+    if (!validate()) {
       return;
     }
-    event.preventDefault();
     
-    axios.post('http://localhost:3000/user/register', {
-      name: event.target.name.value,
-      email: event.target.email.value,
-      password: event.target.password.value,
+    axios.post('http://127.0.0.1:8000/api/user/signup/', {
+      username: formData.name,
+      email: formData.email,
+      password: formData.password,
     },{
-      withCredentials: true, // Include credentials for CORS
+      withCredentials: true,
     })
     .then(response => {
-      window.location.href = 'http://localhost:3002/'; // Redirect to dashboard or another page
-      console.log('Sign up successful:', response.data.token);
-      
-      // Handle successful sign up (e.g., redirect to login page or show success message)
+      console.log('Sign up successful:', response.data);
+      window.location.href = '/signin';
     })
     .catch(error => {
-      console.error('There was an error signing up:', error);
-      // Handle error (e.g., show error message)
+      // This part is crucial for displaying the error
+      if (error.response && error.response.data && error.response.data.error) {
+        setApiError(error.response.data.error); 
+      } else {
+        setApiError('An unexpected error occurred. Please try again.');
+      }
+      console.error('There was an error signing up:', error.response);
     });
-    
   };
 
   return (
@@ -145,13 +145,22 @@ export default function SignUp(props) {
           >
             Sign up
           </Typography>
+
+          {/* This element will render the error message on the form */}
+          {apiError && (
+            <Typography color="error" sx={{ mt: 2, textAlign: 'center' }}>
+              {apiError}
+            </Typography>
+          )}
+
           <Box
             component="form"
             onSubmit={handleSubmit}
+            noValidate
             sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
           >
             <FormControl>
-              <FormLabel htmlFor="name">Full name</FormLabel>
+              <FormLabel htmlFor="name">Full name (Username)</FormLabel>
               <TextField
                 autoComplete="name"
                 name="name"
@@ -159,9 +168,10 @@ export default function SignUp(props) {
                 fullWidth
                 id="name"
                 placeholder="Jon Snow"
-                error={nameError}
-                helperText={nameErrorMessage}
-                color={nameError ? 'error' : 'primary'}
+                value={formData.name}
+                onChange={handleChange}
+                error={!!formErrors.name}
+                helperText={formErrors.name}
               />
             </FormControl>
             <FormControl>
@@ -174,9 +184,10 @@ export default function SignUp(props) {
                 name="email"
                 autoComplete="email"
                 variant="outlined"
-                error={emailError}
-                helperText={emailErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
+                value={formData.email}
+                onChange={handleChange}
+                error={!!formErrors.email}
+                helperText={formErrors.email}
               />
             </FormControl>
             <FormControl>
@@ -190,9 +201,10 @@ export default function SignUp(props) {
                 id="password"
                 autoComplete="new-password"
                 variant="outlined"
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                color={passwordError ? 'error' : 'primary'}
+                value={formData.password}
+                onChange={handleChange}
+                error={!!formErrors.password}
+                helperText={formErrors.password}
               />
             </FormControl>
             <br />
@@ -200,7 +212,6 @@ export default function SignUp(props) {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
             >
               Sign up
             </Button>
@@ -209,12 +220,10 @@ export default function SignUp(props) {
             <Typography sx={{ color: 'text.secondary' }}>or</Typography>
           </Divider>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-           
-            
             <Typography sx={{ textAlign: 'center' }}>
               Already have an account?{' '}
               <Link
-                href="/material-ui/getting-started/templates/sign-in/"
+                href="/signin"
                 variant="body2"
                 sx={{ alignSelf: 'center' }}
               >

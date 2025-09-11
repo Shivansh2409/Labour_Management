@@ -77,26 +77,23 @@ export default function SignIn(props) {
   };
 
   const handleSubmit = (event) => {
-    if (emailError || passwordError) {
-      event.preventDefault();
+    event.preventDefault();
+    if (!validateInputs()) {
       return;
     }
-    event.preventDefault();
-    axios.post('http://localhost:3000/user/login', {
-      email: event.target.email.value,
+    axios.post('http://127.0.0.1:8000/api/user/login/', {
+      username: event.target.email.value,
       password: event.target.password.value,
     },{
       withCredentials: true, // Include credentials for CORS
     })
     .then(response => {
       console.log('Sign in successful:', response.data);
-      window.location.href = 'http://localhost:3002/dashboard'; // Redirect to dashboard or another page
-      console.log('Sign up successful:', response.data.token);
-      
-      // Handle successful sign up (e.g., redirect to login page or show success message)
+      // Redirect to dashboard or another page
+      window.location.href = '/dashboard'; 
     })
     .catch(error => {
-      console.error('There was an error signing up:', error);
+      console.error('There was an error signing in:', error);
       // Handle error (e.g., show error message)
     });
     
@@ -108,7 +105,7 @@ export default function SignIn(props) {
 
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+    if (!email.value) {
       setEmailError(true);
       setEmailErrorMessage('Please enter a valid email address.');
       isValid = false;
@@ -155,15 +152,15 @@ export default function SignIn(props) {
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormLabel htmlFor="email">Username</FormLabel>
               <TextField
                 error={emailError}
                 helperText={emailErrorMessage}
                 id="email"
-                type="email"
+                type="text"
                 name="email"
-                placeholder="your@email.com"
-                autoComplete="email"
+                placeholder="your-username"
+                autoComplete="username"
                 autoFocus
                 required
                 fullWidth
@@ -194,7 +191,6 @@ export default function SignIn(props) {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
             >
               Sign in
             </Button>
@@ -206,8 +202,9 @@ export default function SignIn(props) {
             <Typography sx={{ textAlign: 'center' }}>
               Don&apos;t have an account?{' '}
               <Link
-                to={"/signup"}
-                style={{ alignSelf: 'center', cursor: 'pointer', textDecoration: 'underline' }}
+                href="/signup"
+                variant="body2"
+                sx={{ alignSelf: 'center' }}
               >
                 Sign up
               </Link>
